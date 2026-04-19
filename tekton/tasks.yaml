@@ -94,4 +94,4 @@ spec:
         #!/usr/bin/env sh
         set -eu
         pip install flake8
-        flake8 . $(params.args)
+        flake8 . $(params.args[*])
