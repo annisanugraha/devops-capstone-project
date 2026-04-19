@@ -95,3 +95,34 @@ spec:
         set -eu
         pip install flake8
         flake8 . $(params.args[*])
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: nose
+spec:
+  description: This task will run nosetests on the provided input.
+  workspaces:
+    - name: source
+  params:
+    - name: args
+      description: ""
+      type: string
+      default: "-v --with-spec --spec-color"
+    - name: database_uri
+      description: ""
+      type: string
+      default: "sqlite:///test.db"
+  steps:
+    - name: nosetests
+      image: python:3.9-slim
+      workingDir: $(workspaces.source.path)
+      env:
+        - name: DATABASE_URI
+          value: $(params.database_uri)
+      script: |
+        #!/bin/bash
+        set -e
+        python -m pip install --upgrade pip wheel
+        pip install -qr requirements.txt
+        nosetests $(params.args)
