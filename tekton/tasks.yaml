@@ -43,3 +43,55 @@ spec:
           rm -rf "${WORKSPACE_SOURCE_PATH}"/.[!.]*
           rm -rf "${WORKSPACE_SOURCE_PATH}"/..?*
         fi
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: git-clone
+spec:
+  description: Tasks that are used to clone a git repository.
+  workspaces:
+    - name: output
+  params:
+    - name: url
+      description: git url to clone
+      type: string
+    - name: revision
+      description: git revision to checkout (branch, tag, sha, ref…)
+      type: string
+      default: "main"
+  steps:
+    - name: clone
+      image: alpine/git:latest
+      workingDir: $(workspaces.output.path)
+      script: |
+        #!/usr/bin/env sh
+        set -eu
+        git clone -b $(params.revision) $(params.url) .
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: flake8
+spec:
+  description: This task will run flake8 on the source code.
+  workspaces:
+    - name: source
+  params:
+    - name: image
+      description: The container image to use.
+      type: string
+      default: "python:3.9-slim"
+    - name: args
+      description: The arguments to pass to flake8.
+      type: array
+      default: ["--count", "--max-complexity=10", "--max-line-length=127", "--statistics"]
+  steps:
+    - name: flake8
+      image: $(params.image)
+      workingDir: $(workspaces.source.path)
+      script: |
+        #!/usr/bin/env sh
+        set -eu
+        pip install flake8
+        flake8 . $(params.args)
