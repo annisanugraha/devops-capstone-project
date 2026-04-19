@@ -90,11 +90,13 @@ spec:
     - name: flake8
       image: $(params.image)
       workingDir: $(workspaces.source.path)
+      args:
+        - "$(params.args[*])"
       script: |
         #!/usr/bin/env sh
         set -eu
         pip install flake8
-        flake8 . $(params.args[*])
+        flake8 . "$@"
 ---
 apiVersion: tekton.dev/v1beta1
 kind: Task
